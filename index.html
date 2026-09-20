@@ -1,0 +1,1496 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Registro Central — Sistema de Ponto e Presença</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+  :root{
+    --ink:#161F29;
+    --ink-soft:#4A5560;
+    --ink-faint:#7C8791;
+    --paper:#EDEEE7;
+    --paper-raised:#FFFFFF;
+    --paper-sunk:#E3E2D9;
+    --line:#D6D3C4;
+    --brass:#A97327;
+    --brass-dark:#7C5219;
+    --brass-bg:#F3E7D3;
+    --green:#2F6B4F;
+    --green-bg:#DFEBE2;
+    --red:#A5402F;
+    --red-bg:#F4E1DC;
+    --blue:#2E5C82;
+    --blue-bg:#E0E9F0;
+    --font-serif:'Source Serif 4', Georgia, serif;
+    --font-sans:'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+    --font-mono:'IBM Plex Mono', 'Courier New', monospace;
+    --radius:3px;
+    --sidebar-w:236px;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:var(--font-sans);
+    background:var(--paper);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  ::selection{background:var(--brass-bg);}
+  a{color:inherit;}
+  button{font-family:inherit;}
+  h1,h2,h3{font-family:var(--font-serif); margin:0; letter-spacing:-0.01em;}
+  .hidden{display:none !important;}
+  .mono{font-family:var(--font-mono);}
+
+  /* ===== LOGIN ===== */
+  #login-screen{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:
+      radial-gradient(circle at 15% 20%, rgba(169,115,39,0.10), transparent 45%),
+      var(--ink);
+    padding:24px;
+  }
+  .login-card{
+    width:100%;
+    max-width:940px;
+    background:var(--paper-raised);
+    border-radius:6px;
+    display:grid;
+    grid-template-columns:1.1fr 1fr;
+    overflow:hidden;
+    box-shadow:0 30px 60px rgba(0,0,0,0.35);
+  }
+  .login-hero{
+    background:var(--ink);
+    color:var(--paper);
+    padding:48px 40px;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    position:relative;
+    overflow:hidden;
+  }
+  .login-hero::before{
+    content:'';
+    position:absolute; inset:0;
+    background:repeating-linear-gradient(115deg, rgba(169,115,39,0.06) 0px, rgba(169,115,39,0.06) 1px, transparent 1px, transparent 34px);
+    pointer-events:none;
+  }
+  .login-clock{
+    font-family:var(--font-mono);
+    font-size:56px;
+    font-weight:500;
+    color:var(--brass);
+    letter-spacing:0.02em;
+    line-height:1;
+  }
+  .login-clock-date{
+    color:var(--ink-faint);
+    margin-top:10px;
+    font-size:14px;
+  }
+  .login-hero h1{
+    font-size:30px;
+    line-height:1.15;
+    margin-top:32px;
+    max-width:22ch;
+  }
+  .login-hero p{
+    color:#B7BEC5;
+    font-size:14.5px;
+    line-height:1.6;
+    max-width:34ch;
+  }
+  .login-form-side{
+    padding:48px 40px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+  }
+  .login-form-side h2{font-size:22px; margin-bottom:6px;}
+  .login-sub{color:var(--ink-soft); font-size:13.5px; margin-bottom:28px;}
+  .field{margin-bottom:16px;}
+  .field label{
+    display:block;
+    font-size:12.5px;
+    font-weight:600;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+  }
+  .field input, .field select, .field textarea{
+    width:100%;
+    padding:10px 12px;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    background:var(--paper);
+    font-size:14.5px;
+    font-family:inherit;
+    color:var(--ink);
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{
+    outline:2px solid var(--brass);
+    outline-offset:1px;
+    background:var(--paper-raised);
+  }
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    padding:11px 18px;
+    border-radius:var(--radius);
+    border:1px solid var(--ink);
+    background:var(--ink);
+    color:var(--paper);
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    transition:transform .08s ease, background .15s ease;
+  }
+  .btn:hover{background:#232F3D;}
+  .btn:active{transform:scale(0.98);}
+  .btn-brass{background:var(--brass); border-color:var(--brass); color:#fff;}
+  .btn-brass:hover{background:var(--brass-dark);}
+  .btn-ghost{background:transparent; color:var(--ink); border:1px solid var(--line);}
+  .btn-ghost:hover{background:var(--paper-sunk);}
+  .btn-danger{background:var(--red); border-color:var(--red); color:#fff;}
+  .btn-danger:hover{background:#8A3427;}
+  .btn-sm{padding:6px 11px; font-size:12.5px;}
+  .btn-block{width:100%;}
+  .login-error{
+    background:var(--red-bg); color:var(--red);
+    padding:10px 12px; border-radius:var(--radius);
+    font-size:13px; margin-bottom:14px; display:none;
+  }
+  .demo-accounts{
+    margin-top:24px;
+    border-top:1px solid var(--line);
+    padding-top:16px;
+    font-size:12px;
+    color:var(--ink-faint);
+    line-height:1.9;
+  }
+  .demo-accounts b{color:var(--ink-soft); font-family:var(--font-mono); font-weight:600;}
+
+  /* ===== APP SHELL ===== */
+  #app{display:none; min-height:100vh;}
+  #app.active{display:flex;}
+  .sidebar{
+    width:var(--sidebar-w);
+    flex-shrink:0;
+    background:var(--ink);
+    color:var(--paper);
+    display:flex;
+    flex-direction:column;
+    position:fixed;
+    top:0; bottom:0; left:0;
+    padding-top:env(safe-area-inset-top,0px);
+  }
+  .sidebar-brand{
+    padding:22px 20px 16px;
+    border-bottom:1px solid rgba(255,255,255,0.08);
+  }
+  .sidebar-brand .mark{
+    font-family:var(--font-serif);
+    font-size:19px;
+    color:var(--paper);
+  }
+  .sidebar-brand .sub{
+    font-size:11px;
+    color:var(--ink-faint);
+    margin-top:2px;
+  }
+  .nav-list{list-style:none; margin:0; padding:14px 10px; flex:1; overflow-y:auto;}
+  .nav-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 12px;
+    border-radius:var(--radius);
+    color:#C4CAD1;
+    font-size:14px;
+    cursor:pointer;
+    margin-bottom:2px;
+    transition:background .12s ease, color .12s ease;
+    border-left:3px solid transparent;
+  }
+  .nav-item:hover{background:rgba(255,255,255,0.06); color:#fff;}
+  .nav-item.active{
+    background:rgba(169,115,39,0.16);
+    color:#fff;
+    border-left:3px solid var(--brass);
+  }
+  .nav-item .dot{
+    width:6px; height:6px; border-radius:50%; background:currentColor; opacity:.5;
+  }
+  .sidebar-footer{
+    padding:14px 20px calc(16px + env(safe-area-inset-bottom,0px));
+    border-top:1px solid rgba(255,255,255,0.08);
+    font-size:12.5px;
+  }
+  .user-chip{display:flex; align-items:center; gap:10px; margin-bottom:10px;}
+  .user-avatar{
+    width:32px; height:32px; border-radius:50%;
+    background:var(--brass); color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    font-weight:600; font-size:13px; flex-shrink:0;
+  }
+  .user-name{color:#fff; font-weight:600; line-height:1.2;}
+  .user-role{color:var(--ink-faint); font-size:11.5px;}
+  .logout-link{color:var(--ink-faint); font-size:12.5px; cursor:pointer; text-decoration:underline;}
+  .logout-link:hover{color:#fff;}
+
+  .main{
+    margin-left:var(--sidebar-w);
+    flex:1;
+    min-width:0;
+    padding:28px 36px 60px;
+    max-width:1240px;
+  }
+  .topbar{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    margin-bottom:26px;
+    gap:20px;
+    flex-wrap:wrap;
+  }
+  .topbar h1{font-size:25px;}
+  .topbar .lede{color:var(--ink-soft); font-size:13.5px; margin-top:4px;}
+  .topbar-clock{
+    font-family:var(--font-mono);
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:10px 16px;
+    text-align:right;
+    min-width:150px;
+  }
+  .topbar-clock .t{font-size:19px; font-weight:600; color:var(--ink);}
+  .topbar-clock .d{font-size:11px; color:var(--ink-faint); margin-top:2px;}
+
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  .card{
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:22px;
+    margin-bottom:20px;
+  }
+  .card-title{font-size:16px; margin-bottom:2px;}
+  .card-sub{font-size:12.5px; color:var(--ink-faint); margin-bottom:16px;}
+
+  .stat-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:20px;}
+  .stat-card{
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-left:3px solid var(--brass);
+    border-radius:var(--radius);
+    padding:16px 18px;
+  }
+  .stat-card.green{border-left-color:var(--green);}
+  .stat-card.red{border-left-color:var(--red);}
+  .stat-card.blue{border-left-color:var(--blue);}
+  .stat-num{font-family:var(--font-serif); font-size:30px; line-height:1;}
+  .stat-label{font-size:12px; color:var(--ink-soft); margin-top:6px;}
+
+  .chart-grid{display:grid; grid-template-columns:1.3fr 1fr; gap:20px;}
+  .chart-box{height:230px; position:relative;}
+
+  table{width:100%; border-collapse:collapse; font-size:13.5px;}
+  thead th{
+    text-align:left;
+    font-size:11.5px;
+    color:var(--ink-faint);
+    font-weight:600;
+    padding:0 10px 10px;
+    border-bottom:1px solid var(--line);
+    white-space:nowrap;
+  }
+  tbody td{
+    padding:11px 10px;
+    border-bottom:1px solid var(--line);
+    vertical-align:middle;
+  }
+  tbody tr:hover{background:var(--paper-sunk);}
+  .table-wrap{overflow-x:auto; margin:0 -4px;}
+  .table-wrap table{min-width:640px;}
+
+  .badge{
+    display:inline-block;
+    padding:3px 9px;
+    border-radius:20px;
+    font-size:11.5px;
+    font-weight:600;
+  }
+  .badge-green{background:var(--green-bg); color:var(--green);}
+  .badge-red{background:var(--red-bg); color:var(--red);}
+  .badge-blue{background:var(--blue-bg); color:var(--blue);}
+  .badge-brass{background:var(--brass-bg); color:var(--brass-dark);}
+  .badge-grey{background:var(--paper-sunk); color:var(--ink-soft);}
+
+  .toolbar{display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; margin-bottom:18px;}
+  .toolbar .field{margin-bottom:0; min-width:150px;}
+  .toolbar .field.grow{flex:1; min-width:180px;}
+
+  .icon-btn{
+    background:none; border:none; cursor:pointer; color:var(--ink-faint);
+    padding:4px 6px; border-radius:3px; font-size:12.5px; text-decoration:underline;
+  }
+  .icon-btn:hover{color:var(--red);}
+  .icon-btn.edit:hover{color:var(--blue);}
+
+  .empty-state{
+    text-align:center; padding:40px 20px; color:var(--ink-faint);
+  }
+  .empty-state .big{font-size:32px; margin-bottom:8px;}
+
+  /* modal */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(22,31,41,0.55);
+    display:none; align-items:center; justify-content:center; z-index:100; padding:20px;
+  }
+  .modal-overlay.active{display:flex;}
+  .modal{
+    background:var(--paper-raised); border-radius:6px; padding:28px;
+    width:100%; max-width:520px; max-height:88vh; overflow-y:auto;
+    box-shadow:0 30px 60px rgba(0,0,0,0.3);
+  }
+  .modal h3{font-size:19px; margin-bottom:18px;}
+  .modal-row2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .modal-actions{display:flex; justify-content:flex-end; gap:10px; margin-top:18px;}
+
+  .clockcard{
+    display:flex; align-items:center; gap:28px; flex-wrap:wrap;
+  }
+  .clockcard .huge{
+    font-family:var(--font-mono); font-size:52px; font-weight:500; color:var(--ink); line-height:1;
+  }
+  .punch-steps{display:flex; gap:10px; flex-wrap:wrap;}
+  .punch-step{
+    border:1px solid var(--line); border-radius:var(--radius); padding:10px 14px; min-width:98px; text-align:center;
+    background:var(--paper);
+  }
+  .punch-step.done{background:var(--green-bg); border-color:var(--green);}
+  .punch-step .lbl{font-size:11px; color:var(--ink-faint); margin-bottom:4px;}
+  .punch-step .val{font-family:var(--font-mono); font-size:15px; font-weight:600;}
+
+  .schedule-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:8px; margin-top:14px;}
+  .sched-col{border:1px solid var(--line); border-radius:var(--radius); overflow:hidden;}
+  .sched-col .hd{background:var(--paper-sunk); padding:8px; font-size:12px; font-weight:600; text-align:center;}
+  .sched-col .bd{padding:10px 8px; text-align:center;}
+  .sched-col select{width:100%; font-size:12px; padding:5px; border-radius:3px; border:1px solid var(--line);}
+
+  .perm-note{
+    background:var(--brass-bg); color:var(--brass-dark); padding:12px 14px; border-radius:var(--radius);
+    font-size:13px; margin-bottom:18px; border:1px solid rgba(169,115,39,0.3);
+  }
+
+  .pagination{display:flex; gap:6px; justify-content:flex-end; margin-top:14px;}
+  .pagination button{
+    border:1px solid var(--line); background:var(--paper-raised); border-radius:3px;
+    width:30px; height:30px; cursor:pointer; font-size:12.5px;
+  }
+  .pagination button.active{background:var(--ink); color:#fff; border-color:var(--ink);}
+
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ink:#EDEEE7; --ink-soft:#B7BEC5; --ink-faint:#8A93A0;
+      --paper:#161F29; --paper-raised:#1E2833; --paper-sunk:#263140; --line:#33404E;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#EDEEE7; --ink-soft:#B7BEC5; --ink-faint:#8A93A0;
+    --paper:#161F29; --paper-raised:#1E2833; --paper-sunk:#263140; --line:#33404E;
+  }
+
+  @media (max-width: 920px){
+    .stat-grid{grid-template-columns:repeat(2,1fr);}
+    .chart-grid{grid-template-columns:1fr;}
+    .login-card{grid-template-columns:1fr;}
+    .login-hero{display:none;}
+  }
+  @media (max-width: 720px){
+    .sidebar{position:static; width:100%; flex-direction:row; overflow-x:auto; padding-top:calc(10px + env(safe-area-inset-top,0px));}
+    .sidebar-brand{display:none;}
+    .nav-list{display:flex; padding:10px; flex:none;}
+    .nav-item{white-space:nowrap;}
+    .sidebar-footer{display:none;}
+    #app.active{flex-direction:column;}
+    .main{margin-left:0; padding:20px 16px 50px;}
+    .modal-row2{grid-template-columns:1fr;}
+    .schedule-grid{grid-template-columns:repeat(4,1fr);}
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== LOGIN ===================== -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-hero">
+      <div>
+        <div class="login-clock" id="loginClock">00:00:00</div>
+        <div class="login-clock-date" id="loginDate">—</div>
+        <h1>Registro Central</h1>
+        <p>Controle de ponto, presença e escalas para toda a empresa — um único painel para RH, gestores e colaboradores.</p>
+      </div>
+      <p style="font-size:12px; color:#7C8791;">v2.0 · Ambiente de demonstração</p>
+    </div>
+    <div class="login-form-side">
+      <h2>Entrar no sistema</h2>
+      <div class="login-sub">Use uma das contas de demonstração abaixo ou a conta cadastrada pela sua empresa.</div>
+      <div class="login-error" id="loginError">Usuário ou senha inválidos.</div>
+      <form id="loginForm">
+        <div class="field">
+          <label for="loginUser">Usuário</label>
+          <input id="loginUser" type="text" autocomplete="username" placeholder="ex: admin">
+        </div>
+        <div class="field">
+          <label for="loginPass">Senha</label>
+          <input id="loginPass" type="password" autocomplete="current-password" placeholder="••••••••">
+        </div>
+        <button type="submit" class="btn btn-brass btn-block">Entrar</button>
+      </form>
+      <div class="demo-accounts">
+        <div><b>admin / admin123</b> — Administrador (acesso total)</div>
+        <div><b>rh / rh123</b> — Recursos Humanos</div>
+        <div><b>gestor / gestor123</b> — Gestor (equipe de Operações)</div>
+        <div><b>funcionario / func123</b> — Colaborador (dados próprios)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== APP ===================== -->
+<div id="app">
+  <div class="sidebar">
+    <div class="sidebar-brand">
+      <div class="mark">Registro Central</div>
+      <div class="sub" id="companyNameLabel">Sua Empresa Ltda.</div>
+    </div>
+    <ul class="nav-list" id="navList"></ul>
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="user-avatar" id="userAvatar">—</div>
+        <div>
+          <div class="user-name" id="userNameLabel">—</div>
+          <div class="user-role" id="userRoleLabel">—</div>
+        </div>
+      </div>
+      <span class="logout-link" id="logoutBtn">Sair do sistema</span>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <h1 id="pageTitle">Painel</h1>
+        <div class="lede" id="pageLede">Visão geral do dia.</div>
+      </div>
+      <div class="topbar-clock">
+        <div class="t" id="topClock">00:00:00</div>
+        <div class="d" id="topDate">—</div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <section class="panel" id="panel-dashboard">
+      <div class="stat-grid" id="dashStats"></div>
+      <div class="chart-grid">
+        <div class="card">
+          <div class="card-title">Presença nos últimos 14 dias</div>
+          <div class="card-sub">Comparativo diário entre presenças e faltas registradas.</div>
+          <div class="chart-box"><canvas id="chartTrend"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Distribuição de status — hoje</div>
+          <div class="card-sub" id="chartDonutSub">Todos os departamentos.</div>
+          <div class="chart-box"><canvas id="chartDonut"></canvas></div>
+        </div>
+      </div>
+      <div class="card" id="dashDeptCard">
+        <div class="card-title">Presença por departamento</div>
+        <div class="card-sub">Percentual de presença hoje, por área.</div>
+        <div class="chart-box" style="height:260px;"><canvas id="chartDept"></canvas></div>
+      </div>
+    </section>
+
+    <!-- PONTO ELETRÔNICO -->
+    <section class="panel" id="panel-ponto">
+      <div class="card">
+        <div class="card-title">Meu ponto — hoje</div>
+        <div class="card-sub" id="pontoEmployeeLabel">—</div>
+        <div class="clockcard">
+          <div class="huge" id="pontoBigClock">00:00:00</div>
+          <div class="punch-steps" id="punchSteps"></div>
+          <button class="btn btn-brass" id="punchBtn">Bater ponto</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Histórico de ponto</div>
+        <div class="toolbar" id="pontoToolbar"></div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Colaborador</th><th>Data</th><th>Entrada</th><th>Saída almoço</th><th>Volta almoço</th><th>Saída</th><th>Horas</th><th>Status</th></tr></thead>
+          <tbody id="pontoTableBody"></tbody>
+        </table></div>
+        <div id="pontoEmpty" class="empty-state hidden"><div class="big">🕘</div>Nenhum registro de ponto encontrado.</div>
+      </div>
+    </section>
+
+    <!-- PRESENÇA -->
+    <section class="panel" id="panel-presenca">
+      <div class="card">
+        <div class="card-title">Novo registro de ocorrência</div>
+        <div class="card-sub">Registre faltas, atestados, férias ou home office. Presenças são geradas automaticamente a partir do ponto.</div>
+        <form id="presenceForm">
+          <div class="modal-row2">
+            <div class="field">
+              <label>Colaborador</label>
+              <select id="presEmployee" required></select>
+            </div>
+            <div class="field">
+              <label>Data</label>
+              <input type="date" id="presDate" required>
+            </div>
+          </div>
+          <div class="modal-row2">
+            <div class="field">
+              <label>Status</label>
+              <select id="presStatus">
+                <option>Falta</option>
+                <option>Atestado médico</option>
+                <option>Férias</option>
+                <option>Home office</option>
+                <option>Falta justificada</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Observação (opcional)</label>
+              <input type="text" id="presObs" placeholder="ex: atestado de 2 dias">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-brass">Adicionar ocorrência</button>
+        </form>
+      </div>
+      <div class="card">
+        <div class="card-title">Registros de presença</div>
+        <div class="toolbar" id="presenceToolbar"></div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Colaborador</th><th>Departamento</th><th>Data</th><th>Status</th><th>Observação</th><th></th></tr></thead>
+          <tbody id="presenceTableBody"></tbody>
+        </table></div>
+        <div id="presenceEmpty" class="empty-state hidden"><div class="big">📋</div>Nenhum registro para os filtros selecionados.</div>
+      </div>
+    </section>
+
+    <!-- FUNCIONÁRIOS -->
+    <section class="panel" id="panel-funcionarios">
+      <div class="card">
+        <div class="toolbar" style="justify-content:space-between;">
+          <div class="toolbar" id="empToolbar" style="margin-bottom:0;"></div>
+          <button class="btn btn-brass btn-sm" id="newEmployeeBtn">+ Novo colaborador</button>
+        </div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Nome</th><th>Matrícula</th><th>Cargo</th><th>Departamento</th><th>Admissão</th><th>Status</th><th></th></tr></thead>
+          <tbody id="empTableBody"></tbody>
+        </table></div>
+        <div id="empEmpty" class="empty-state hidden"><div class="big">🗂️</div>Nenhum colaborador encontrado.</div>
+        <div class="pagination" id="empPagination"></div>
+      </div>
+    </section>
+
+    <!-- ESCALAS -->
+    <section class="panel" id="panel-escalas">
+      <div class="card">
+        <div class="card-title">Escala semanal</div>
+        <div class="card-sub">Selecione um colaborador para ver ou editar o turno de cada dia da semana.</div>
+        <div class="field" style="max-width:340px;">
+          <label>Colaborador</label>
+          <select id="scheduleEmployeeSelect"></select>
+        </div>
+        <div class="schedule-grid" id="scheduleGrid"></div>
+        <div class="modal-actions" id="scheduleActions"></div>
+      </div>
+    </section>
+
+    <!-- RELATÓRIOS -->
+    <section class="panel" id="panel-relatorios">
+      <div class="card">
+        <div class="card-title">Relatório de frequência</div>
+        <div class="card-sub">Filtre por período e departamento para gerar o resumo de presença por colaborador.</div>
+        <div class="toolbar" id="reportToolbar"></div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Colaborador</th><th>Departamento</th><th>Dias c/ ponto</th><th>Faltas</th><th>Atestados</th><th>Horas totais</th><th>Assiduidade</th></tr></thead>
+          <tbody id="reportTableBody"></tbody>
+        </table></div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost btn-sm" id="exportCsvBtn">Exportar CSV</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- USUÁRIOS -->
+    <section class="panel" id="panel-usuarios">
+      <div class="perm-note">Esta aba controla as contas de acesso ao sistema e é visível apenas para o Administrador.</div>
+      <div class="card">
+        <div class="toolbar" style="justify-content:space-between;">
+          <div></div>
+          <button class="btn btn-brass btn-sm" id="newUserBtn">+ Nova conta</button>
+        </div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Usuário</th><th>Nome</th><th>Perfil</th><th>Escopo</th><th>Status</th><th></th></tr></thead>
+          <tbody id="userTableBody"></tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- CONFIGURAÇÕES -->
+    <section class="panel" id="panel-config">
+      <div class="card">
+        <div class="card-title">Dados da empresa</div>
+        <div class="modal-row2">
+          <div class="field"><label>Nome da empresa</label><input type="text" id="cfgCompanyName"></div>
+          <div class="field"><label>Jornada padrão (horas/dia)</label><input type="number" id="cfgWorkHours" min="1" max="12"></div>
+        </div>
+        <button class="btn btn-brass btn-sm" id="saveCompanyBtn">Salvar</button>
+      </div>
+      <div class="card">
+        <div class="card-title">Departamentos</div>
+        <div class="card-sub">Usados nos cadastros de colaboradores, escalas e relatórios.</div>
+        <div id="deptList" style="margin-bottom:14px;"></div>
+        <div class="toolbar">
+          <div class="field grow"><input type="text" id="newDeptInput" placeholder="Nome do novo departamento"></div>
+          <button class="btn btn-ghost btn-sm" id="addDeptBtn">Adicionar</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Aparência</div>
+        <div class="toolbar">
+          <button class="btn btn-ghost btn-sm" id="themeLightBtn">Tema claro</button>
+          <button class="btn btn-ghost btn-sm" id="themeDarkBtn">Tema escuro</button>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- ===================== MODAL: employee ===================== -->
+<div class="modal-overlay" id="employeeModalOverlay">
+  <div class="modal">
+    <h3 id="employeeModalTitle">Novo colaborador</h3>
+    <form id="employeeForm">
+      <input type="hidden" id="empId">
+      <div class="field"><label>Nome completo</label><input type="text" id="empNome" required></div>
+      <div class="modal-row2">
+        <div class="field"><label>Matrícula</label><input type="text" id="empMatricula" required></div>
+        <div class="field"><label>Data de admissão</label><input type="date" id="empAdmissao" required></div>
+      </div>
+      <div class="modal-row2">
+        <div class="field"><label>Cargo</label><input type="text" id="empCargo" required></div>
+        <div class="field"><label>Departamento</label><select id="empDepartamento" required></select></div>
+      </div>
+      <div class="modal-row2">
+        <div class="field"><label>E-mail</label><input type="email" id="empEmail"></div>
+        <div class="field"><label>Telefone</label><input type="text" id="empTelefone"></div>
+      </div>
+      <div class="field">
+        <label>Status</label>
+        <select id="empStatus"><option>Ativo</option><option>Inativo</option></select>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="cancelEmployeeBtn">Cancelar</button>
+        <button type="submit" class="btn btn-brass">Salvar colaborador</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===================== MODAL: user account ===================== -->
+<div class="modal-overlay" id="userModalOverlay">
+  <div class="modal">
+    <h3>Nova conta de acesso</h3>
+    <form id="userForm">
+      <div class="field"><label>Colaborador vinculado</label><select id="userEmployee" required></select></div>
+      <div class="modal-row2">
+        <div class="field"><label>Usuário (login)</label><input type="text" id="userUsername" required></div>
+        <div class="field"><label>Senha inicial</label><input type="text" id="userPassword" required></div>
+      </div>
+      <div class="field">
+        <label>Perfil de acesso</label>
+        <select id="userRole">
+          <option value="rh">Recursos Humanos</option>
+          <option value="gestor">Gestor</option>
+          <option value="funcionario">Colaborador</option>
+          <option value="admin">Administrador</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="cancelUserBtn">Cancelar</button>
+        <button type="submit" class="btn btn-brass">Criar conta</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============================================================
+   DATA LAYER — localStorage-backed store
+   ============================================================ */
+const DB_KEY = 'registroCentralDB_v1';
+let DB = null;
+
+function loadDB(){
+  try{
+    const raw = localStorage.getItem(DB_KEY);
+    if(raw) DB = JSON.parse(raw);
+  }catch(e){ console.error('Falha ao ler dados salvos', e); }
+  if(!DB) DB = null;
+}
+function saveDB(){
+  try{ localStorage.setItem(DB_KEY, JSON.stringify(DB)); }
+  catch(e){ console.error('Falha ao salvar dados', e); }
+}
+function uid(prefix){ return prefix + '_' + Math.random().toString(36).slice(2,10); }
+function pad(n){ return String(n).padStart(2,'0'); }
+function todayStr(){ const d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+function fmtDateBR(iso){ if(!iso) return '—'; const [y,m,d]=iso.split('-'); return d+'/'+m+'/'+y; }
+function addDays(iso, n){ const d=new Date(iso+'T00:00:00'); d.setDate(d.getDate()+n); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+function weekdayName(iso){ return ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'][new Date(iso+'T00:00:00').getDay()]; }
+
+/* ---------- seed generation ---------- */
+const FIRST_NAMES = ["Ana Beatriz","Bruno","Caio","Camila","Daniela","Eduardo","Fernanda","Gabriel","Helena","Igor","Juliana","Kevin","Larissa","Marcos","Natália","Otávio","Patrícia","Rafael","Sabrina","Thiago","Vanessa","Wagner","Ximena","Yasmin","Alexandre","Beatriz","Carlos","Débora","Elisa","Felipe","Gustavo","Isabela","João","Karina","Leonardo","Mariana","Nicolas","Priscila","Renato","Sofia","Tatiane","Vinícius","Aline","Bernardo","Cristina","Diego","Elaine","Fábio","Giovana","Henrique"];
+const LAST_NAMES = ["Silva","Santos","Oliveira","Souza","Rodrigues","Ferreira","Almeida","Pereira","Lima","Gomes","Costa","Ribeiro","Martins","Carvalho","Araújo","Melo","Barbosa","Rocha","Nascimento","Cardoso","Teixeira","Correia","Dias","Castro","Campos","Cavalcanti","Freitas","Monteiro","Moreira","Nunes"];
+const DEPARTMENTS = ["Comercial","Operações","Recursos Humanos","Tecnologia da Informação","Financeiro","Logística","Atendimento ao Cliente"];
+const CARGOS = ["Analista","Assistente","Coordenador(a)","Supervisor(a)","Especialista","Auxiliar","Consultor(a)"];
+const TURNOS = ["Manhã (06:00–14:00)","Comercial (08:00–17:00)","Tarde (14:00–22:00)","Noite (22:00–06:00)"];
+
+function rnd(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function rndInt(a,b){ return a + Math.floor(Math.random()*(b-a+1)); }
+
+function generateSeed(){
+  const employees = [];
+  const total = 140;
+  for(let i=0;i<total;i++){
+    const nome = rnd(FIRST_NAMES)+' '+rnd(LAST_NAMES)+' '+rnd(LAST_NAMES);
+    employees.push({
+      id: uid('emp'),
+      nome,
+      matricula: 'MT-' + String(1000+i),
+      cargo: rnd(CARGOS),
+      departamento: rnd(DEPARTMENTS),
+      email: nome.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,'.') + '@empresa.com.br',
+      telefone: '(21) 9' + rndInt(6000,9999) + '-' + rndInt(1000,9999),
+      dataAdmissao: (2019+rndInt(0,6)) + '-' + pad(rndInt(1,12)) + '-' + pad(rndInt(1,28)),
+      status: Math.random() < 0.06 ? 'Inativo' : 'Ativo',
+      turnoPadrao: rnd(TURNOS)
+    });
+  }
+  // fixed demo employees for predictable logins
+  const funcionarioDemo = {
+    id: 'emp_demo_funcionario', nome:'Ana Beatriz Ferreira Lima', matricula:'MT-1001', cargo:'Analista de Atendimento',
+    departamento:'Comercial', email:'ana.lima@empresa.com.br', telefone:'(21) 98888-1234',
+    dataAdmissao:'2022-03-14', status:'Ativo', turnoPadrao:TURNOS[1]
+  };
+  const gestorEmployee = {
+    id:'emp_demo_gestor', nome:'Marcos Vinícius Rocha Teixeira', matricula:'MT-1002', cargo:'Gestor de Operações',
+    departamento:'Operações', email:'marcos.teixeira@empresa.com.br', telefone:'(21) 98888-5678',
+    dataAdmissao:'2020-07-01', status:'Ativo', turnoPadrao:TURNOS[1]
+  };
+  employees[0] = funcionarioDemo;
+  employees[1] = gestorEmployee;
+
+  const users = [
+    {id:uid('usr'), username:'admin', senha:'admin123', role:'admin', nome:'Administrador do Sistema', employeeId:null, departamento:null, ativo:true},
+    {id:uid('usr'), username:'rh', senha:'rh123', role:'rh', nome:'Equipe de RH', employeeId:null, departamento:null, ativo:true},
+    {id:uid('usr'), username:'gestor', senha:'gestor123', role:'gestor', nome:gestorEmployee.nome, employeeId:gestorEmployee.id, departamento:'Operações', ativo:true},
+    {id:uid('usr'), username:'funcionario', senha:'func123', role:'funcionario', nome:funcionarioDemo.nome, employeeId:funcionarioDemo.id, departamento:'Comercial', ativo:true}
+  ];
+
+  // ponto (clock-in) history — last 10 business-ish days
+  const ponto = [];
+  const presence = [];
+  for(let dback=9; dback>=0; dback--){
+    const date = addDays(todayStr(), -dback);
+    const wd = new Date(date+'T00:00:00').getDay();
+    const isWeekend = wd===0 || wd===6;
+    employees.forEach(emp=>{
+      if(emp.status !== 'Ativo') return;
+      if(isWeekend) return;
+      const roll = Math.random();
+      if(roll < 0.05){
+        presence.push({id:uid('prs'), employeeId:emp.id, data:date, status: Math.random()<0.5?'Falta':'Atestado médico', observacao: Math.random()<0.5?'':'Atestado médico anexado'});
+        return;
+      }
+      const entradaH = 7 + Math.random()*1.2;
+      const entrada = pad(Math.floor(entradaH))+':'+pad(Math.floor((entradaH%1)*60));
+      const saidaAlmoco = '12:0'+rndInt(0,5);
+      const voltaAlmoco = '13:0'+rndInt(0,5);
+      const saidaH = 16.5 + Math.random()*1.4;
+      const saida = pad(Math.floor(saidaH))+':'+pad(Math.floor((saidaH%1)*60));
+      const horas = (parseFloat(saidaH) - parseFloat(entradaH) - 1).toFixed(1);
+      ponto.push({id:uid('pto'), employeeId:emp.id, data:date, entrada, saidaAlmoco, voltaAlmoco, saida, horasTrabalhadas:horas, status:'Completo'});
+    });
+  }
+
+  // today: demo employee/gestor have only entrada punched, to demonstrate the flow
+  ponto.push({id:uid('pto'), employeeId:funcionarioDemo.id, data:todayStr(), entrada:'08:0'+rndInt(0,4), saidaAlmoco:'', voltaAlmoco:'', saida:'', horasTrabalhadas:'', status:'Em andamento'});
+
+  // schedules
+  const schedules = {};
+  employees.forEach(emp=>{
+    schedules[emp.id] = [0,1,2,3,4,5,6].map(d=>{
+      if(d===0 || d===6) return {dia:d, turno:'Folga'};
+      return {dia:d, turno:emp.turnoPadrao};
+    });
+  });
+
+  return {
+    config:{ companyName:'Aurora Manufatura & Logística Ltda.', workHours:8, theme:'light' },
+    departments: DEPARTMENTS.slice(),
+    employees, users, ponto, presence, schedules,
+    session:null
+  };
+}
+
+function seedIfEmpty(){
+  loadDB();
+  if(!DB){ DB = generateSeed(); saveDB(); }
+}
+
+/* ============================================================
+   AUTH
+   ============================================================ */
+const ROLE_LABEL = {admin:'Administrador', rh:'Recursos Humanos', gestor:'Gestor', funcionario:'Colaborador'};
+
+function currentUser(){ return DB.session ? DB.users.find(u=>u.id===DB.session) : null; }
+
+function login(username, password){
+  const user = DB.users.find(u=>u.username.toLowerCase()===username.toLowerCase() && u.senha===password && u.ativo);
+  if(!user) return false;
+  DB.session = user.id;
+  saveDB();
+  return true;
+}
+function logout(){ DB.session=null; saveDB(); location.reload(); }
+
+/* scope helpers */
+function employeeById(id){ return DB.employees.find(e=>e.id===id); }
+function myEmployee(){ const u=currentUser(); return u && u.employeeId ? employeeById(u.employeeId) : null; }
+
+function scopedEmployees(){
+  const u = currentUser();
+  if(!u) return [];
+  if(u.role==='admin' || u.role==='rh') return DB.employees;
+  if(u.role==='gestor') return DB.employees.filter(e=>e.departamento===u.departamento);
+  if(u.role==='funcionario') return DB.employees.filter(e=>e.id===u.employeeId);
+  return [];
+}
+function canAccess(tab){
+  const u = currentUser();
+  if(!u) return false;
+  const matrix = {
+    admin:['dashboard','ponto','presenca','funcionarios','escalas','relatorios','usuarios','config'],
+    rh:['dashboard','ponto','presenca','funcionarios','escalas','relatorios'],
+    gestor:['dashboard','ponto','presenca','escalas','relatorios'],
+    funcionario:['dashboard','ponto','presenca','escalas']
+  };
+  return (matrix[u.role]||[]).includes(tab);
+}
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+const TABS = [
+  {id:'dashboard', label:'Painel', lede:'Visão geral do dia.'},
+  {id:'ponto', label:'Ponto eletrônico', lede:'Registro de entrada e saída.'},
+  {id:'presenca', label:'Presença', lede:'Ocorrências de frequência.'},
+  {id:'funcionarios', label:'Funcionários', lede:'Cadastro de colaboradores.'},
+  {id:'escalas', label:'Escalas', lede:'Turnos por colaborador.'},
+  {id:'relatorios', label:'Relatórios', lede:'Indicadores de frequência.'},
+  {id:'usuarios', label:'Usuários', lede:'Contas e permissões de acesso.'},
+  {id:'config', label:'Configurações', lede:'Preferências da empresa.'}
+];
+let activeTab = 'dashboard';
+let charts = {};
+
+function renderNav(){
+  const list = document.getElementById('navList');
+  list.innerHTML = TABS.filter(t=>canAccess(t.id)).map(t=>
+    `<li class="nav-item ${t.id===activeTab?'active':''}" data-tab="${t.id}"><span class="dot"></span>${t.label}</li>`
+  ).join('');
+  list.querySelectorAll('.nav-item').forEach(el=>{
+    el.addEventListener('click', ()=>navigate(el.dataset.tab));
+  });
+}
+
+function navigate(tab){
+  if(!canAccess(tab)) tab = 'dashboard';
+  activeTab = tab;
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+tab).classList.add('active');
+  const meta = TABS.find(t=>t.id===tab);
+  document.getElementById('pageTitle').textContent = meta.label;
+  document.getElementById('pageLede').textContent = meta.lede;
+  renderNav();
+  renderPanel(tab);
+}
+
+function renderPanel(tab){
+  if(tab==='dashboard') renderDashboard();
+  if(tab==='ponto') renderPonto();
+  if(tab==='presenca') renderPresence();
+  if(tab==='funcionarios') renderEmployees();
+  if(tab==='escalas') renderSchedules();
+  if(tab==='relatorios') renderReports();
+  if(tab==='usuarios') renderUsers();
+  if(tab==='config') renderConfig();
+}
+
+/* ============================================================
+   CLOCK
+   ============================================================ */
+function tickClocks(){
+  const now = new Date();
+  const t = now.toLocaleTimeString('pt-BR');
+  const d = now.toLocaleDateString('pt-BR', {weekday:'long', day:'2-digit', month:'long', year:'numeric'});
+  ['loginClock','topClock','pontoBigClock'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=t; });
+  ['loginDate','topDate'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=d; });
+}
+setInterval(tickClocks, 1000);
+
+/* ============================================================
+   DASHBOARD
+   ============================================================ */
+function renderDashboard(){
+  const emps = scopedEmployees();
+  const active = emps.filter(e=>e.status==='Ativo');
+  const today = todayStr();
+  const pontosHoje = DB.ponto.filter(p=>p.data===today && emps.some(e=>e.id===p.employeeId));
+  const presencasHoje = DB.presence.filter(p=>p.data===today && emps.some(e=>e.id===p.employeeId));
+  const faltasHoje = presencasHoje.filter(p=>p.status.includes('Falta')).length;
+  const presentesHoje = pontosHoje.length;
+  const taxa = active.length ? Math.round((presentesHoje/active.length)*100) : 0;
+
+  document.getElementById('dashStats').innerHTML = `
+    <div class="stat-card blue"><div class="stat-num">${active.length}</div><div class="stat-label">${currentUser().role==='funcionario'?'Meu cadastro':'Colaboradores ativos'}</div></div>
+    <div class="stat-card green"><div class="stat-num">${presentesHoje}</div><div class="stat-label">Pontos batidos hoje</div></div>
+    <div class="stat-card red"><div class="stat-num">${faltasHoje}</div><div class="stat-label">Ocorrências hoje</div></div>
+    <div class="stat-card"><div class="stat-num">${taxa}%</div><div class="stat-label">Taxa de presença hoje</div></div>
+  `;
+
+  // trend chart: last 14 days presence vs faltas
+  const days = []; for(let i=13;i>=0;i--) days.push(addDays(today,-i));
+  const presentData = days.map(d=> DB.ponto.filter(p=>p.data===d && emps.some(e=>e.id===p.employeeId)).length );
+  const faltaData = days.map(d=> DB.presence.filter(p=>p.data===d && p.status.includes('Falta') && emps.some(e=>e.id===p.employeeId)).length );
+
+  if(charts.trend) charts.trend.destroy();
+  charts.trend = new Chart(document.getElementById('chartTrend'), {
+    type:'line',
+    data:{ labels: days.map(d=>d.slice(8,10)+'/'+d.slice(5,7)),
+      datasets:[
+        {label:'Presenças', data:presentData, borderColor:'#2F6B4F', backgroundColor:'rgba(47,107,79,0.12)', tension:0.3, fill:true},
+        {label:'Faltas', data:faltaData, borderColor:'#A5402F', backgroundColor:'rgba(165,64,47,0.10)', tension:0.3, fill:true}
+      ]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{boxWidth:10, font:{size:11}}}}, scales:{y:{beginAtZero:true, ticks:{precision:0}}} }
+  });
+
+  // donut: status distribution today
+  const statusCount = {Presente:presentesHoje, Falta:0, Atestado:0, Outros:0};
+  presencasHoje.forEach(p=>{
+    if(p.status==='Falta') statusCount.Falta++;
+    else if(p.status.includes('Atestado')) statusCount.Atestado++;
+    else statusCount.Outros++;
+  });
+  if(charts.donut) charts.donut.destroy();
+  charts.donut = new Chart(document.getElementById('chartDonut'), {
+    type:'doughnut',
+    data:{ labels:Object.keys(statusCount), datasets:[{ data:Object.values(statusCount), backgroundColor:['#2F6B4F','#A5402F','#A97327','#7C8791'] }]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{boxWidth:10, font:{size:11}}}} }
+  });
+
+  const deptCard = document.getElementById('dashDeptCard');
+  if(currentUser().role==='funcionario' || currentUser().role==='gestor'){
+    deptCard.classList.add('hidden');
+  } else {
+    deptCard.classList.remove('hidden');
+    const depts = DB.departments;
+    const rates = depts.map(dep=>{
+      const deptEmps = emps.filter(e=>e.departamento===dep && e.status==='Ativo');
+      if(!deptEmps.length) return 0;
+      const present = DB.ponto.filter(p=>p.data===today && deptEmps.some(e=>e.id===p.employeeId)).length;
+      return Math.round((present/deptEmps.length)*100);
+    });
+    if(charts.dept) charts.dept.destroy();
+    charts.dept = new Chart(document.getElementById('chartDept'), {
+      type:'bar',
+      data:{ labels:depts, datasets:[{label:'% presença hoje', data:rates, backgroundColor:'#A97327', borderRadius:4}]},
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true, max:100}} }
+    });
+  }
+}
+
+/* ============================================================
+   PONTO ELETRÔNICO
+   ============================================================ */
+function todaysPunch(employeeId){
+  return DB.ponto.find(p=>p.employeeId===employeeId && p.data===todayStr());
+}
+function nextPunchStep(record){
+  if(!record || !record.entrada) return 'entrada';
+  if(!record.saidaAlmoco) return 'saidaAlmoco';
+  if(!record.voltaAlmoco) return 'voltaAlmoco';
+  if(!record.saida) return 'saida';
+  return null;
+}
+const STEP_LABEL = {entrada:'Entrada', saidaAlmoco:'Saída (almoço)', voltaAlmoco:'Volta (almoço)', saida:'Saída'};
+
+function renderPunchWidget(){
+  const emp = myEmployee();
+  const label = document.getElementById('pontoEmployeeLabel');
+  const btn = document.getElementById('punchBtn');
+  if(!emp){
+    label.textContent = 'Selecione um colaborador na tabela abaixo para registrar o ponto (perfil de gestão).';
+    btn.classList.add('hidden');
+    document.getElementById('punchSteps').innerHTML = '';
+    return;
+  }
+  btn.classList.remove('hidden');
+  label.textContent = emp.nome + ' · ' + emp.matricula + ' · ' + emp.departamento;
+  const record = todaysPunch(emp.id);
+  const steps = ['entrada','saidaAlmoco','voltaAlmoco','saida'];
+  document.getElementById('punchSteps').innerHTML = steps.map(s=>{
+    const val = record ? record[s] : '';
+    return `<div class="punch-step ${val?'done':''}"><div class="lbl">${STEP_LABEL[s]}</div><div class="val">${val || '—:—'}</div></div>`;
+  }).join('');
+  const next = nextPunchStep(record);
+  if(!next){ btn.textContent = 'Jornada concluída'; btn.disabled = true; btn.classList.add('btn-ghost'); }
+  else { btn.textContent = 'Registrar '+STEP_LABEL[next].toLowerCase(); btn.disabled = false; btn.classList.remove('btn-ghost'); }
+}
+
+function doPunch(){
+  const emp = myEmployee();
+  if(!emp) return;
+  const now = new Date();
+  const timeStr = pad(now.getHours())+':'+pad(now.getMinutes());
+  let record = todaysPunch(emp.id);
+  if(!record){
+    record = {id:uid('pto'), employeeId:emp.id, data:todayStr(), entrada:'', saidaAlmoco:'', voltaAlmoco:'', saida:'', horasTrabalhadas:'', status:'Em andamento'};
+    DB.ponto.push(record);
+  }
+  const step = nextPunchStep(record);
+  if(!step) return;
+  record[step] = timeStr;
+  if(step==='saida'){
+    const [eh,em_] = record.entrada.split(':').map(Number);
+    const [sh,sm] = record.saida.split(':').map(Number);
+    let mins = (sh*60+sm)-(eh*60+em_);
+    if(record.saidaAlmoco && record.voltaAlmoco){
+      const [lh,lm] = record.saidaAlmoco.split(':').map(Number);
+      const [rh,rm] = record.voltaAlmoco.split(':').map(Number);
+      mins -= ((rh*60+rm)-(lh*60+lm));
+    }
+    record.horasTrabalhadas = (mins/60).toFixed(1);
+    record.status = 'Completo';
+  }
+  saveDB();
+  renderPunchWidget();
+  renderPonto();
+}
+
+function renderPonto(){
+  renderPunchWidget();
+  const emps = scopedEmployees();
+  const toolbar = document.getElementById('pontoToolbar');
+  const canSeeAll = ['admin','rh','gestor'].includes(currentUser().role);
+  toolbar.innerHTML = canSeeAll ? `
+    <div class="field grow"><label>Colaborador</label><select id="pontoFilterEmp"><option value="">Todos</option>${emps.map(e=>`<option value="${e.id}">${e.nome}</option>`).join('')}</select></div>
+    <div class="field"><label>Data inicial</label><input type="date" id="pontoFilterFrom" value="${addDays(todayStr(),-9)}"></div>
+    <div class="field"><label>Data final</label><input type="date" id="pontoFilterTo" value="${todayStr()}"></div>
+  ` : '';
+  if(canSeeAll){
+    document.getElementById('pontoFilterEmp').addEventListener('change', drawPontoTable);
+    document.getElementById('pontoFilterFrom').addEventListener('change', drawPontoTable);
+    document.getElementById('pontoFilterTo').addEventListener('change', drawPontoTable);
+  }
+  drawPontoTable();
+}
+function drawPontoTable(){
+  const emps = scopedEmployees();
+  const empFilter = document.getElementById('pontoFilterEmp');
+  const fromEl = document.getElementById('pontoFilterFrom');
+  const toEl = document.getElementById('pontoFilterTo');
+  const from = fromEl ? fromEl.value : addDays(todayStr(),-9);
+  const to = toEl ? toEl.value : todayStr();
+  let rows = DB.ponto.filter(p=> emps.some(e=>e.id===p.employeeId) && p.data>=from && p.data<=to);
+  if(empFilter && empFilter.value) rows = rows.filter(p=>p.employeeId===empFilter.value);
+  rows = rows.sort((a,b)=> b.data.localeCompare(a.data));
+  const tbody = document.getElementById('pontoTableBody');
+  document.getElementById('pontoEmpty').classList.toggle('hidden', rows.length>0);
+  tbody.innerHTML = rows.slice(0,200).map(r=>{
+    const emp = employeeById(r.employeeId);
+    const statusBadge = r.status==='Completo' ? '<span class="badge badge-green">Completo</span>' : '<span class="badge badge-brass">Em andamento</span>';
+    return `<tr><td>${emp?emp.nome:'—'}</td><td>${fmtDateBR(r.data)}</td><td class="mono">${r.entrada||'—'}</td><td class="mono">${r.saidaAlmoco||'—'}</td><td class="mono">${r.voltaAlmoco||'—'}</td><td class="mono">${r.saida||'—'}</td><td class="mono">${r.horasTrabalhadas||'—'}</td><td>${statusBadge}</td></tr>`;
+  }).join('');
+}
+
+/* ============================================================
+   PRESENÇA (ocorrências)
+   ============================================================ */
+function statusBadgeHtml(status){
+  if(status==='Falta') return `<span class="badge badge-red">Falta</span>`;
+  if(status.includes('Atestado')) return `<span class="badge badge-blue">${status}</span>`;
+  if(status==='Férias') return `<span class="badge badge-brass">Férias</span>`;
+  return `<span class="badge badge-grey">${status}</span>`;
+}
+function renderPresence(){
+  const emps = scopedEmployees();
+  const canEdit = ['admin','rh','gestor'].includes(currentUser().role);
+  document.getElementById('presenceForm').parentElement.classList.toggle('hidden', !canEdit);
+  const empSel = document.getElementById('presEmployee');
+  empSel.innerHTML = emps.map(e=>`<option value="${e.id}">${e.nome}</option>`).join('');
+  document.getElementById('presDate').value = todayStr();
+
+  const toolbar = document.getElementById('presenceToolbar');
+  toolbar.innerHTML = `
+    <div class="field grow"><label>Colaborador</label><select id="presFilterEmp"><option value="">Todos</option>${emps.map(e=>`<option value="${e.id}">${e.nome}</option>`).join('')}</select></div>
+    <div class="field"><label>Data inicial</label><input type="date" id="presFilterFrom" value="${addDays(todayStr(),-13)}"></div>
+    <div class="field"><label>Data final</label><input type="date" id="presFilterTo" value="${todayStr()}"></div>
+  `;
+  ['presFilterEmp','presFilterFrom','presFilterTo'].forEach(id=>document.getElementById(id).addEventListener('change', drawPresenceTable));
+  drawPresenceTable();
+}
+function drawPresenceTable(){
+  const emps = scopedEmployees();
+  const canEdit = ['admin','rh','gestor'].includes(currentUser().role);
+  const empFilter = document.getElementById('presFilterEmp').value;
+  const from = document.getElementById('presFilterFrom').value;
+  const to = document.getElementById('presFilterTo').value;
+  let rows = DB.presence.filter(p=> emps.some(e=>e.id===p.employeeId) && p.data>=from && p.data<=to);
+  if(empFilter) rows = rows.filter(p=>p.employeeId===empFilter);
+  rows = rows.sort((a,b)=> b.data.localeCompare(a.data));
+  const tbody = document.getElementById('presenceTableBody');
+  document.getElementById('presenceEmpty').classList.toggle('hidden', rows.length>0);
+  tbody.innerHTML = rows.map(r=>{
+    const emp = employeeById(r.employeeId);
+    return `<tr><td>${emp?emp.nome:'—'}</td><td>${emp?emp.departamento:'—'}</td><td>${fmtDateBR(r.data)}</td><td>${statusBadgeHtml(r.status)}</td><td>${r.observacao||'—'}</td><td>${canEdit?`<button class="icon-btn" data-del="${r.id}">Excluir</button>`:''}</td></tr>`;
+  }).join('');
+  tbody.querySelectorAll('[data-del]').forEach(btn=>btn.addEventListener('click', ()=>{
+    DB.presence = DB.presence.filter(p=>p.id!==btn.dataset.del);
+    saveDB(); drawPresenceTable(); renderDashboard();
+  }));
+}
+document.addEventListener('submit', function(e){
+  if(e.target && e.target.id==='presenceForm'){
+    e.preventDefault();
+    DB.presence.push({
+      id:uid('prs'),
+      employeeId:document.getElementById('presEmployee').value,
+      data:document.getElementById('presDate').value,
+      status:document.getElementById('presStatus').value,
+      observacao:document.getElementById('presObs').value
+    });
+    saveDB();
+    document.getElementById('presObs').value='';
+    drawPresenceTable();
+    renderDashboard();
+  }
+});
+
+/* ============================================================
+   FUNCIONÁRIOS
+   ============================================================ */
+let empPage = 1;
+const EMP_PAGE_SIZE = 14;
+function renderEmployees(){
+  const canEdit = ['admin','rh'].includes(currentUser().role);
+  document.getElementById('newEmployeeBtn').classList.toggle('hidden', !canEdit);
+  const toolbar = document.getElementById('empToolbar');
+  toolbar.innerHTML = `
+    <div class="field grow"><input type="text" id="empSearch" placeholder="Buscar por nome ou matrícula..."></div>
+    <div class="field"><select id="empDeptFilter"><option value="">Todos os departamentos</option>${DB.departments.map(d=>`<option>${d}</option>`).join('')}</select></div>
+    <div class="field"><select id="empStatusFilter"><option value="">Todos os status</option><option>Ativo</option><option>Inativo</option></select></div>
+  `;
+  ['empSearch','empDeptFilter','empStatusFilter'].forEach(id=>document.getElementById(id).addEventListener('input', ()=>{empPage=1; drawEmpTable();}));
+  drawEmpTable();
+}
+function drawEmpTable(){
+  const canEdit = ['admin','rh'].includes(currentUser().role);
+  const q = (document.getElementById('empSearch').value||'').toLowerCase();
+  const dept = document.getElementById('empDeptFilter').value;
+  const status = document.getElementById('empStatusFilter').value;
+  let rows = scopedEmployees().filter(e=>
+    (!q || e.nome.toLowerCase().includes(q) || e.matricula.toLowerCase().includes(q)) &&
+    (!dept || e.departamento===dept) && (!status || e.status===status)
+  );
+  const totalPages = Math.max(1, Math.ceil(rows.length/EMP_PAGE_SIZE));
+  if(empPage>totalPages) empPage = totalPages;
+  const paged = rows.slice((empPage-1)*EMP_PAGE_SIZE, empPage*EMP_PAGE_SIZE);
+  document.getElementById('empEmpty').classList.toggle('hidden', rows.length>0);
+  document.getElementById('empTableBody').innerHTML = paged.map(e=>`
+    <tr>
+      <td>${e.nome}</td><td class="mono">${e.matricula}</td><td>${e.cargo}</td><td>${e.departamento}</td>
+      <td>${fmtDateBR(e.dataAdmissao)}</td>
+      <td>${e.status==='Ativo'?'<span class="badge badge-green">Ativo</span>':'<span class="badge badge-grey">Inativo</span>'}</td>
+      <td>${canEdit?`<button class="icon-btn edit" data-edit="${e.id}">Editar</button> <button class="icon-btn" data-del="${e.id}">Excluir</button>`:''}</td>
+    </tr>`).join('');
+  document.getElementById('empPagination').innerHTML = Array.from({length:totalPages}, (_,i)=>
+    `<button class="${i+1===empPage?'active':''}" data-page="${i+1}">${i+1}</button>`).join('');
+  document.querySelectorAll('#empPagination button').forEach(b=>b.addEventListener('click', ()=>{empPage=parseInt(b.dataset.page); drawEmpTable();}));
+  document.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click', ()=>openEmployeeModal(b.dataset.edit)));
+  document.querySelectorAll('#empTableBody [data-del]').forEach(b=>b.addEventListener('click', ()=>{
+    if(!confirm('Excluir este colaborador? Esta ação não pode ser desfeita.')) return;
+    DB.employees = DB.employees.filter(e=>e.id!==b.dataset.del);
+    saveDB(); drawEmpTable();
+  }));
+}
+function openEmployeeModal(id){
+  const overlay = document.getElementById('employeeModalOverlay');
+  const deptSel = document.getElementById('empDepartamento');
+  deptSel.innerHTML = DB.departments.map(d=>`<option>${d}</option>`).join('');
+  const emp = id ? employeeById(id) : null;
+  document.getElementById('employeeModalTitle').textContent = emp ? 'Editar colaborador' : 'Novo colaborador';
+  document.getElementById('empId').value = emp ? emp.id : '';
+  document.getElementById('empNome').value = emp ? emp.nome : '';
+  document.getElementById('empMatricula').value = emp ? emp.matricula : ('MT-'+ (1000+DB.employees.length));
+  document.getElementById('empAdmissao').value = emp ? emp.dataAdmissao : todayStr();
+  document.getElementById('empCargo').value = emp ? emp.cargo : '';
+  deptSel.value = emp ? emp.departamento : DB.departments[0];
+  document.getElementById('empEmail').value = emp ? emp.email : '';
+  document.getElementById('empTelefone').value = emp ? emp.telefone : '';
+  document.getElementById('empStatus').value = emp ? emp.status : 'Ativo';
+  overlay.classList.add('active');
+}
+document.getElementById('newEmployeeBtn').addEventListener('click', ()=>openEmployeeModal(null));
+document.getElementById('cancelEmployeeBtn').addEventListener('click', ()=>document.getElementById('employeeModalOverlay').classList.remove('active'));
+document.getElementById('employeeForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  const id = document.getElementById('empId').value;
+  const data = {
+    nome:document.getElementById('empNome').value,
+    matricula:document.getElementById('empMatricula').value,
+    dataAdmissao:document.getElementById('empAdmissao').value,
+    cargo:document.getElementById('empCargo').value,
+    departamento:document.getElementById('empDepartamento').value,
+    email:document.getElementById('empEmail').value,
+    telefone:document.getElementById('empTelefone').value,
+    status:document.getElementById('empStatus').value,
+    turnoPadrao:TURNOS[1]
+  };
+  if(id){ Object.assign(employeeById(id), data); }
+  else { data.id = uid('emp'); DB.employees.push(data); }
+  saveDB();
+  document.getElementById('employeeModalOverlay').classList.remove('active');
+  drawEmpTable();
+});
+
+/* ============================================================
+   ESCALAS
+   ============================================================ */
+const DIAS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+function renderSchedules(){
+  const emps = scopedEmployees();
+  const sel = document.getElementById('scheduleEmployeeSelect');
+  sel.innerHTML = emps.map(e=>`<option value="${e.id}">${e.nome}</option>`).join('');
+  const canEdit = ['admin','rh','gestor'].includes(currentUser().role);
+  sel.addEventListener('change', ()=>drawScheduleGrid(sel.value, canEdit));
+  if(emps.length) drawScheduleGrid(emps[0].id, canEdit);
+}
+function drawScheduleGrid(empId, canEdit){
+  const sched = DB.schedules[empId] || [0,1,2,3,4,5,6].map(d=>({dia:d, turno:'Folga'}));
+  const grid = document.getElementById('scheduleGrid');
+  grid.innerHTML = sched.map(s=>`
+    <div class="sched-col">
+      <div class="hd">${DIAS[s.dia]}</div>
+      <div class="bd">
+        ${canEdit ? `<select data-dia="${s.dia}">${['Folga',...TURNOS].map(t=>`<option ${t===s.turno?'selected':''}>${t}</option>`).join('')}</select>`
+                  : `<span style="font-size:12px;">${s.turno.split(' ')[0]}</span>`}
+      </div>
+    </div>`).join('');
+  const actions = document.getElementById('scheduleActions');
+  actions.innerHTML = canEdit ? `<button class="btn btn-brass btn-sm" id="saveScheduleBtn">Salvar escala</button>` : '';
+  if(canEdit){
+    document.getElementById('saveScheduleBtn').addEventListener('click', ()=>{
+      const selects = grid.querySelectorAll('select[data-dia]');
+      const newSched = Array.from(selects).map(s=>({dia:parseInt(s.dataset.dia), turno:s.value}));
+      DB.schedules[empId] = newSched;
+      saveDB();
+      alert('Escala salva com sucesso.');
+    });
+  }
+}
+
+/* ============================================================
+   RELATÓRIOS
+   ============================================================ */
+function renderReports(){
+  const emps = scopedEmployees();
+  const toolbar = document.getElementById('reportToolbar');
+  toolbar.innerHTML = `
+    <div class="field"><label>Data inicial</label><input type="date" id="repFrom" value="${addDays(todayStr(),-13)}"></div>
+    <div class="field"><label>Data final</label><input type="date" id="repTo" value="${todayStr()}"></div>
+    <div class="field"><label>Departamento</label><select id="repDept"><option value="">Todos</option>${DB.departments.map(d=>`<option>${d}</option>`).join('')}</select></div>
+  `;
+  ['repFrom','repTo','repDept'].forEach(id=>document.getElementById(id).addEventListener('change', drawReportTable));
+  drawReportTable();
+}
+function drawReportTable(){
+  const emps = scopedEmployees();
+  const from = document.getElementById('repFrom').value;
+  const to = document.getElementById('repTo').value;
+  const dept = document.getElementById('repDept').value;
+  const rows = emps.filter(e=>!dept || e.departamento===dept).map(e=>{
+    const pontos = DB.ponto.filter(p=>p.employeeId===e.id && p.data>=from && p.data<=to);
+    const faltas = DB.presence.filter(p=>p.employeeId===e.id && p.data>=from && p.data<=to && p.status==='Falta').length;
+    const atestados = DB.presence.filter(p=>p.employeeId===e.id && p.data>=from && p.data<=to && p.status.includes('Atestado')).length;
+    const totalHoras = pontos.reduce((s,p)=>s+(parseFloat(p.horasTrabalhadas)||0),0);
+    const diasUteis = pontos.length + faltas + atestados;
+    const assiduidade = diasUteis ? Math.round((pontos.length/diasUteis)*100) : 100;
+    return {e, pontos:pontos.length, faltas, atestados, totalHoras:totalHoras.toFixed(1), assiduidade};
+  });
+  document.getElementById('reportTableBody').innerHTML = rows.map(r=>`
+    <tr><td>${r.e.nome}</td><td>${r.e.departamento}</td><td>${r.pontos}</td><td>${r.faltas}</td><td>${r.atestados}</td><td class="mono">${r.totalHoras}h</td>
+    <td>${r.assiduidade>=90?'<span class="badge badge-green">':r.assiduidade>=75?'<span class="badge badge-brass">':'<span class="badge badge-red">'}${r.assiduidade}%</span></td></tr>
+  `).join('');
+  window._lastReportRows = rows;
+}
+document.getElementById('exportCsvBtn').addEventListener('click', ()=>{
+  const rows = window._lastReportRows || [];
+  const header = ['Colaborador','Departamento','Dias com ponto','Faltas','Atestados','Horas totais','Assiduidade (%)'];
+  const lines = [header.join(';')].concat(rows.map(r=>[r.e.nome,r.e.departamento,r.pontos,r.faltas,r.atestados,r.totalHoras,r.assiduidade].join(';')));
+  const blob = new Blob(['\ufeff'+lines.join('\n')], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'relatorio_frequencia_'+todayStr()+'.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+/* ============================================================
+   USUÁRIOS (admin only)
+   ============================================================ */
+function renderUsers(){
+  document.getElementById('userTableBody').innerHTML = DB.users.map(u=>`
+    <tr>
+      <td class="mono">${u.username}</td><td>${u.nome}</td>
+      <td><span class="badge badge-brass">${ROLE_LABEL[u.role]}</span></td>
+      <td>${u.departamento || (u.role==='funcionario' ? (employeeById(u.employeeId)||{}).departamento : 'Toda a empresa') || '—'}</td>
+      <td>${u.ativo?'<span class="badge badge-green">Ativa</span>':'<span class="badge badge-grey">Inativa</span>'}</td>
+      <td><button class="icon-btn" data-toggle="${u.id}">${u.ativo?'Desativar':'Ativar'}</button></td>
+    </tr>`).join('');
+  document.querySelectorAll('[data-toggle]').forEach(b=>b.addEventListener('click', ()=>{
+    const u = DB.users.find(x=>x.id===b.dataset.toggle);
+    if(u.username==='admin'){ alert('A conta admin principal não pode ser desativada.'); return; }
+    u.ativo = !u.ativo; saveDB(); renderUsers();
+  }));
+}
+document.getElementById('newUserBtn').addEventListener('click', ()=>{
+  const sel = document.getElementById('userEmployee');
+  sel.innerHTML = DB.employees.map(e=>`<option value="${e.id}">${e.nome} — ${e.departamento}</option>`).join('');
+  document.getElementById('userModalOverlay').classList.add('active');
+});
+document.getElementById('cancelUserBtn').addEventListener('click', ()=>document.getElementById('userModalOverlay').classList.remove('active'));
+document.getElementById('userForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  const empId = document.getElementById('userEmployee').value;
+  const emp = employeeById(empId);
+  const role = document.getElementById('userRole').value;
+  DB.users.push({
+    id:uid('usr'), username:document.getElementById('userUsername').value,
+    senha:document.getElementById('userPassword').value, role,
+    nome:emp.nome, employeeId:empId, departamento: role==='gestor' ? emp.departamento : null, ativo:true
+  });
+  saveDB();
+  document.getElementById('userModalOverlay').classList.remove('active');
+  renderUsers();
+});
+
+/* ============================================================
+   CONFIGURAÇÕES
+   ============================================================ */
+function renderConfig(){
+  document.getElementById('cfgCompanyName').value = DB.config.companyName;
+  document.getElementById('cfgWorkHours').value = DB.config.workHours;
+  drawDeptList();
+}
+function drawDeptList(){
+  document.getElementById('deptList').innerHTML = DB.departments.map(d=>
+    `<span class="badge badge-grey" style="margin:0 6px 6px 0; padding:6px 10px;">${d} <span style="cursor:pointer; color:var(--red);" data-rmdept="${d}">✕</span></span>`
+  ).join('');
+  document.querySelectorAll('[data-rmdept]').forEach(el=>el.addEventListener('click', ()=>{
+    if(DB.employees.some(e=>e.departamento===el.dataset.rmdept)){ alert('Não é possível remover: há colaboradores neste departamento.'); return; }
+    DB.departments = DB.departments.filter(d=>d!==el.dataset.rmdept);
+    saveDB(); drawDeptList();
+  }));
+}
+document.getElementById('addDeptBtn').addEventListener('click', ()=>{
+  const input = document.getElementById('newDeptInput');
+  if(input.value.trim()){ DB.departments.push(input.value.trim()); input.value=''; saveDB(); drawDeptList(); }
+});
+document.getElementById('saveCompanyBtn').addEventListener('click', ()=>{
+  DB.config.companyName = document.getElementById('cfgCompanyName').value;
+  DB.config.workHours = parseInt(document.getElementById('cfgWorkHours').value)||8;
+  saveDB();
+  document.getElementById('companyNameLabel').textContent = DB.config.companyName;
+  alert('Dados da empresa salvos.');
+});
+document.getElementById('themeLightBtn').addEventListener('click', ()=>setTheme('light'));
+document.getElementById('themeDarkBtn').addEventListener('click', ()=>setTheme('dark'));
+function setTheme(t){
+  document.documentElement.setAttribute('data-theme', t);
+  DB.config.theme = t; saveDB();
+}
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+function boot(){
+  seedIfEmpty();
+  if(DB.config.theme) document.documentElement.setAttribute('data-theme', DB.config.theme);
+  tickClocks();
+
+  document.getElementById('loginForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    const ok = login(document.getElementById('loginUser').value.trim(), document.getElementById('loginPass').value);
+    if(ok) startApp();
+    else document.getElementById('loginError').style.display = 'block';
+  });
+  document.getElementById('logoutBtn').addEventListener('click', logout);
+  document.getElementById('punchBtn').addEventListener('click', doPunch);
+
+  if(DB.session && currentUser()){ startApp(); }
+}
+
+function startApp(){
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').classList.add('active');
+  const u = currentUser();
+  document.getElementById('userAvatar').textContent = u.nome.split(' ').map(w=>w[0]).slice(0,2).join('');
+  document.getElementById('userNameLabel').textContent = u.nome;
+  document.getElementById('userRoleLabel').textContent = ROLE_LABEL[u.role];
+  document.getElementById('companyNameLabel').textContent = DB.config.companyName;
+  activeTab = canAccess('dashboard') ? 'dashboard' : TABS.find(t=>canAccess(t.id)).id;
+  navigate(activeTab);
+}
+
+boot();
+})();
+</script>
+</body>
+</html>
